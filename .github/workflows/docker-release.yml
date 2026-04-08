@@ -1,5 +1,4 @@
 name: Docker Release
-
 on:
   push:
     branches:
@@ -18,16 +17,13 @@ on:
         description: Existing release tag to backfill (for example v2026.3.13)
         required: true
         type: string
-
 concurrency:
   group: docker-release-${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
   cancel-in-progress: false
-
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-
 jobs:
   validate_manual_backfill:
     if: github.event_name == 'workflow_dispatch'
@@ -44,13 +40,12 @@ jobs:
             echo "Invalid release tag: ${RELEASE_TAG}"
             exit 1
           fi
-
       - name: Checkout selected tag
         uses: actions/checkout@v6
         with:
           ref: refs/tags/${{ inputs.tag }}
           fetch-depth: 0
-
+    timeout-minutes: 30
   approve_manual_backfill:
     if: github.event_name == 'workflow_dispatch'
     needs: validate_manual_backfill
@@ -62,7 +57,7 @@ jobs:
         env:
           RELEASE_TAG: ${{ inputs.tag }}
         run: echo "Approved Docker backfill for $RELEASE_TAG"
-
+    timeout-minutes: 30
   # KEEP THIS WORKFLOW ON GITHUB-HOSTED RUNNERS.
   # DO NOT MOVE IT BACK TO BLACKSMITH WITHOUT RE-VALIDATING TAG BUILDS AND BACKFILLS.
   # Build amd64 images (default + slim share the build stage cache)
@@ -83,17 +78,14 @@ jobs:
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.tag) || github.ref }}
           fetch-depth: 0
-
       - name: Set up Docker Builder
         uses: docker/setup-buildx-action@v4
-
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Resolve image tags (amd64)
         id: tags
         shell: bash
@@ -127,7 +119,6 @@ jobs:
             printf "%s\n" "${slim_tags[@]}"
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
-
       - name: Resolve OCI labels (amd64)
         id: labels
         shell: bash
@@ -151,7 +142,6 @@ jobs:
             echo "org.opencontainers.image.created=${created}"
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
-
       - name: Build and push amd64 image
         id: build
         # WARNING: KEEP THE OFFICIAL DOCKER ACTION HERE; DO NOT SWITCH THIS BACK TO BLACKSMITH BLINDLY.
@@ -163,7 +153,6 @@ jobs:
           labels: ${{ steps.labels.outputs.value }}
           provenance: false
           push: true
-
       - name: Build and push amd64 slim image
         id: build-slim
         # WARNING: KEEP THE OFFICIAL DOCKER ACTION HERE; DO NOT SWITCH THIS BACK TO BLACKSMITH BLINDLY.
@@ -177,7 +166,7 @@ jobs:
           labels: ${{ steps.labels.outputs.value }}
           provenance: false
           push: true
-
+    timeout-minutes: 30
   # Build arm64 images (default + slim share the build stage cache)
   build-arm64:
     needs: [approve_manual_backfill]
@@ -196,17 +185,14 @@ jobs:
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.tag) || github.ref }}
           fetch-depth: 0
-
       - name: Set up Docker Builder
         uses: docker/setup-buildx-action@v4
-
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Resolve image tags (arm64)
         id: tags
         shell: bash
@@ -240,7 +226,6 @@ jobs:
             printf "%s\n" "${slim_tags[@]}"
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
-
       - name: Resolve OCI labels (arm64)
         id: labels
         shell: bash
@@ -264,7 +249,6 @@ jobs:
             echo "org.opencontainers.image.created=${created}"
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
-
       - name: Build and push arm64 image
         id: build
         # WARNING: KEEP THE OFFICIAL DOCKER ACTION HERE; DO NOT SWITCH THIS BACK TO BLACKSMITH BLINDLY.
@@ -276,7 +260,6 @@ jobs:
           labels: ${{ steps.labels.outputs.value }}
           provenance: false
           push: true
-
       - name: Build and push arm64 slim image
         id: build-slim
         # WARNING: KEEP THE OFFICIAL DOCKER ACTION HERE; DO NOT SWITCH THIS BACK TO BLACKSMITH BLINDLY.
@@ -290,7 +273,7 @@ jobs:
           labels: ${{ steps.labels.outputs.value }}
           provenance: false
           push: true
-
+    timeout-minutes: 30
   # Create multi-platform manifests
   create-manifest:
     needs: [approve_manual_backfill, build-amd64, build-arm64]
@@ -306,14 +289,12 @@ jobs:
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.tag) || github.ref }}
           fetch-depth: 0
-
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Resolve manifest tags
         id: tags
         shell: bash
@@ -353,7 +334,6 @@ jobs:
             printf "%s\n" "${slim_tags[@]}"
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
-
       - name: Create and push default manifest
         shell: bash
         run: |
@@ -367,7 +347,6 @@ jobs:
           docker buildx imagetools create "${args[@]}" \
             ${{ needs.build-amd64.outputs.digest }} \
             ${{ needs.build-arm64.outputs.digest }}
-
       - name: Create and push slim manifest
         shell: bash
         run: |
@@ -381,3 +360,4 @@ jobs:
           docker buildx imagetools create "${args[@]}" \
             ${{ needs.build-amd64.outputs.slim-digest }} \
             ${{ needs.build-arm64.outputs.slim-digest }}
+    timeout-minutes: 30
