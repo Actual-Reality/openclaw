@@ -1,5 +1,4 @@
 name: Sandbox Common Smoke
-
 on:
   push:
     branches: [main]
@@ -12,14 +11,11 @@ on:
       - Dockerfile.sandbox
       - Dockerfile.sandbox-common
       - scripts/sandbox-common-setup.sh
-
 concurrency:
   group: sandbox-common-smoke-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-
 jobs:
   sandbox-common-smoke:
     runs-on: blacksmith-16vcpu-ubuntu-2404
@@ -28,10 +24,8 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: false
-
       - name: Set up Docker Builder
         uses: docker/setup-buildx-action@v4
-
       - name: Build minimal sandbox base (USER sandbox)
         shell: bash
         run: |
@@ -43,7 +37,6 @@ jobs:
           USER sandbox
           WORKDIR /home/sandbox
           EOF
-
       - name: Build sandbox-common image (root for installs, sandbox at runtime)
         shell: bash
         run: |
@@ -60,3 +53,4 @@ jobs:
 
           u="$(docker run --rm openclaw-sandbox-common-smoke:bookworm-slim sh -lc 'id -un')"
           test "$u" = "sandbox"
+    timeout-minutes: 15
