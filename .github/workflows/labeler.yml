@@ -1,5 +1,4 @@
 name: Labeler
-
 on:
   pull_request_target: # zizmor: ignore[dangerous-triggers] maintainer-owned triage workflow; no untrusted checkout or PR code execution
     types: [opened, synchronize, reopened]
@@ -15,12 +14,9 @@ on:
         description: "PRs per page (1-100)"
         required: false
         default: "50"
-
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-
 permissions: {}
-
 jobs:
   label:
     permissions:
@@ -376,7 +372,7 @@ jobs:
                 }
               }
             }
-
+    timeout-minutes: 10
   backfill-pr-labels:
     if: github.event_name == 'workflow_dispatch'
     permissions:
@@ -626,7 +622,7 @@ jobs:
             }
 
             core.info(`Processed ${processed} pull requests.`);
-
+    timeout-minutes: 10
   label-issues:
     permissions:
       issues: write
@@ -715,3 +711,4 @@ jobs:
             //     labels: [trustedLabel],
             //   });
             // }
+    timeout-minutes: 10
