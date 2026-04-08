@@ -1,5 +1,4 @@
 name: Auto response
-
 on:
   issues:
     types: [opened, edited, labeled]
@@ -7,12 +6,9 @@ on:
     types: [created]
   pull_request_target: # zizmor: ignore[dangerous-triggers] maintainer-owned label automation; no untrusted checkout or code execution
     types: [labeled]
-
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-
 permissions: {}
-
 jobs:
   auto-response:
     permissions:
@@ -522,3 +518,4 @@ jobs:
                 lock_reason: rule.lockReason ?? "resolved",
               });
             }
+    timeout-minutes: 10
