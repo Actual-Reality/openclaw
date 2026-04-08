@@ -1,5 +1,4 @@
 name: OpenClaw NPM Release
-
 on:
   push:
     tags:
@@ -10,16 +9,13 @@ on:
         description: Release tag to publish (for example v2026.3.14, v2026.3.14-beta.1, or fallback v2026.3.14-1)
         required: true
         type: string
-
 concurrency:
   group: openclaw-npm-release-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
   cancel-in-progress: false
-
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
   NODE_VERSION: "24.x"
   PNPM_VERSION: "10.23.0"
-
 jobs:
   preview_openclaw_npm:
     if: github.event_name == 'push'
@@ -31,7 +27,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-
       - name: Setup Node environment
         uses: ./.github/actions/setup-node-env
         with:
@@ -39,7 +34,6 @@ jobs:
           pnpm-version: ${{ env.PNPM_VERSION }}
           install-bun: "false"
           use-sticky-disk: "false"
-
       - name: Print release plan
         env:
           RELEASE_TAG: ${{ github.ref_name }}
@@ -65,7 +59,6 @@ jobs:
           echo "Would run: pnpm check"
           echo "Would run: pnpm build"
           echo "Would run: pnpm release:check"
-
       - name: Validate release tag and package metadata
         env:
           RELEASE_TAG: ${{ github.ref_name }}
@@ -78,7 +71,6 @@ jobs:
           # for older tagged commits that are still contained in main.
           git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
           pnpm release:openclaw:npm:check
-
       - name: Ensure version is not already published
         env:
           RELEASE_TAG: ${{ github.ref_name }}
@@ -105,25 +97,21 @@ jobs:
           else
             echo "Previewing openclaw@${PACKAGE_VERSION}"
           fi
-
       - name: Check
         run: |
           set -euxo pipefail
           pnpm check
-
       - name: Build
         run: |
           set -euxo pipefail
           pnpm build
-
       - name: Verify release contents
         run: |
           set -euxo pipefail
           pnpm release:check
-
       - name: Preview publish command
         run: bash scripts/openclaw-npm-publish.sh --dry-run
-
+    timeout-minutes: 30
   publish_openclaw_npm:
     if: github.event_name == 'workflow_dispatch'
     # npm trusted publishing + provenance requires a GitHub-hosted runner.
@@ -142,13 +130,11 @@ jobs:
             echo "Invalid release tag format: ${RELEASE_TAG}"
             exit 1
           fi
-
       - name: Checkout
         uses: actions/checkout@v6
         with:
           ref: refs/tags/${{ inputs.tag }}
           fetch-depth: 0
-
       - name: Setup Node environment
         uses: ./.github/actions/setup-node-env
         with:
@@ -156,7 +142,6 @@ jobs:
           pnpm-version: ${{ env.PNPM_VERSION }}
           install-bun: "false"
           use-sticky-disk: "false"
-
       - name: Validate release tag and package metadata
         env:
           RELEASE_TAG: ${{ inputs.tag }}
@@ -169,7 +154,6 @@ jobs:
           # for older tagged commits that are still contained in main.
           git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
           pnpm release:openclaw:npm:check
-
       - name: Ensure version is not already published
         run: |
           set -euo pipefail
@@ -181,15 +165,12 @@ jobs:
           fi
 
           echo "Publishing openclaw@${PACKAGE_VERSION}"
-
       - name: Check
         run: pnpm check
-
       - name: Build
         run: pnpm build
-
       - name: Verify release contents
         run: pnpm release:check
-
       - name: Publish
         run: bash scripts/openclaw-npm-publish.sh --publish
+    timeout-minutes: 30
