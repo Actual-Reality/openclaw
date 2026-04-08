@@ -17,6 +17,7 @@ jobs:
   no-tabs:
     if: github.event_name != 'workflow_dispatch'
     runs-on: blacksmith-16vcpu-ubuntu-2404
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -49,6 +50,7 @@ jobs:
   actionlint:
     if: github.event_name != 'workflow_dispatch'
     runs-on: blacksmith-16vcpu-ubuntu-2404
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -75,6 +77,7 @@ jobs:
   config-docs-drift:
     if: github.event_name == 'workflow_dispatch'
     runs-on: blacksmith-16vcpu-ubuntu-2404
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v6
