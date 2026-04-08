@@ -1,15 +1,11 @@
 name: Stale
-
 on:
   schedule:
     - cron: "17 3 * * *"
   workflow_dispatch:
-
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-
 permissions: {}
-
 jobs:
   stale:
     permissions:
@@ -118,7 +114,7 @@ jobs:
             Closing due to inactivity.
             If you believe this PR should be revived, post in #pr-thunderdome-dangerzone on Discord to talk to a maintainer.
             That channel is the escape hatch for high-quality PRs that get auto-closed.
-
+    timeout-minutes: 10
   lock-closed-issues:
     permissions:
       issues: write
@@ -215,3 +211,4 @@ jobs:
             }
 
             core.info(`Inspected ${inspected} closed issues; locked ${locked}.`);
+    timeout-minutes: 10
