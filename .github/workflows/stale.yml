@@ -16,6 +16,7 @@ jobs:
       issues: write
       pull-requests: write
     runs-on: blacksmith-16vcpu-ubuntu-2404
+    timeout-minutes: 10
     steps:
       - uses: actions/create-github-app-token@v2
         id: app-token
@@ -123,6 +124,7 @@ jobs:
     permissions:
       issues: write
     runs-on: blacksmith-16vcpu-ubuntu-2404
+    timeout-minutes: 10
     steps:
       - uses: actions/create-github-app-token@v2
         id: app-token
